@@ -14,7 +14,7 @@ default = []
 userspace = [ "aya" ]
 
 [dependencies]
-aya = { version = "0.10.7", optional=true }
+aya = { git = "https://github.com/vadorovsky/aya", branch = "bpf_d_path", optional=true }
 
 [lib]
 path = "src/lib.rs"
