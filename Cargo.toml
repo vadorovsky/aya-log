@@ -1,2 +1,2 @@
 [workspace]
-members = ["aya-log", "aya-log-common", "xtask"]
+members = ["aya-log", "aya-log-common", "aya-log-ebpf-macros", "aya-log-parser", "xtask"]
