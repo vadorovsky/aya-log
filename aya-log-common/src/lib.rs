@@ -89,18 +89,32 @@ where
     }
 
     pub(crate) fn write(&self, mut buf: &mut [u8]) -> Result<usize, ()> {
-        let size = mem::size_of::<T>() + mem::size_of::<usize>() + self.value.len();
-        let remaining = cmp::min(buf.len(), LOG_BUF_CAPACITY);
+        let size_of_tag = mem::size_of::<T>();
+        let size_of_usize = mem::size_of::<usize>();
+        let size_of_value = self.value.len();
+        let size = size_of_tag + size_of_usize + size_of_value;
+        let mut remaining = cmp::min(buf.len(), LOG_BUF_CAPACITY);
         // Check if the size doesn't exceed the buffer bounds.
-        if size > remaining {
+        if size_of_tag > remaining
+            || size_of_usize > remaining
+            || size_of_value > remaining
+            || size > remaining
+        {
             return Err(());
         }
 
         unsafe { ptr::write_unaligned(buf.as_mut_ptr() as *mut _, self.tag) };
-        buf = &mut buf[mem::size_of::<T>()..];
+        if size_of_tag > remaining {
+            return Err(());
+        }
+        buf = &mut buf[size_of_tag..];
+        remaining = cmp::min(buf.len(), LOG_BUF_CAPACITY);
 
         unsafe { ptr::write_unaligned(buf.as_mut_ptr() as *mut _, self.value.len()) };
-        buf = &mut buf[mem::size_of::<usize>()..];
+        if size_of_usize > remaining {
+            return Err(());
+        }
+        buf = &mut buf[size_of_usize..];
 
         let len = cmp::min(buf.len(), self.value.len());
         // The verifier isn't happy with `len` being unbounded, so compare it
@@ -147,7 +161,8 @@ impl_write_to_buf!(f64, ArgType::F64);
 
 impl WriteToBuf for str {
     fn write(&self, buf: &mut [u8]) -> Result<usize, ()> {
-        TagLenValue::<ArgType>::new(ArgType::Str, self.as_bytes()).write(buf)
+        // TagLenValue::<ArgType>::new(ArgType::Str, self.as_bytes()).write(buf)
+        Ok(0)
     }
 }
 
